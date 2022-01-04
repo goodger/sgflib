@@ -2,23 +2,20 @@
 # -*- coding: utf-8 -*-
 
 # sgflib.py (Smart Game Format parser & utility library)
-# Copyright © 2000-2021 David John Goodger (goodger@python.org)
+# Copyright © 2000-2022 David John Goodger (goodger@python.org)
 #
-# This library is free software; you can redistribute it and/or modify it
-# under the terms of the GNU Lesser General Public License as published by the
-# Free Software Foundation; either version 2 of the License, or (at your
-# option) any later version.
-#
-# This library is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
-# for more details.
-#
-# You should have received a copy of the GNU Lesser General Public License
-# (lgpl.txt) along with this library; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-# The license is currently available on the Internet at:
-#     http://www.gnu.org/copyleft/lesser.html
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 """
 ====================================================
@@ -1488,8 +1485,16 @@ class CLI:
             formatter_class=argparse.RawDescriptionHelpFormatter,
             # Help option added manually (below) for consistency:
             add_help=False,)
+        exclusive_groups = collections.defaultdict(
+            parser.add_mutually_exclusive_group)
         for names, params in cls.argument_specs:
-            parser.add_argument(*names, **params)
+            if 'exclusive' in params:
+                group = exclusive_groups[params['exclusive']]
+                params = params.copy()
+                del params['exclusive']
+                group.add_argument(*names, **params)
+            else:
+                parser.add_argument(*names, **params)
         names, params = cls.help_option_spec
         parser.add_argument(*names, **params)
         if argv is None:
@@ -1749,9 +1754,11 @@ class NormalizerCLI(CLI):
 
     def execute(self):
         collection = Collection.load(self.settings.source_file)
+        if self.settings.in_place:
+            self.settings.output = self.settings.source_file
         if self.settings.main:
             collection = Collection(game.trunk() for game in collection)
-        if self.uncomment:
+        if self.settings.uncomment:
             collection.uncomment()
         collection.normalize()
         collection.save(self.settings.output, self.settings.pretty_format)
@@ -1765,8 +1772,15 @@ class NormalizerCLI(CLI):
                    'Omit or use "-" to read from the standard input.')}),
         (('--output', '-o',),
          {'default': None,
+          'exclusive': 'output',
           'help': ('Specify output SGF file path (default: "-", output to '
                    '<stdout>, standard output.')}),
+        (('--in-place', '-i',),
+         {'action': 'store_true',
+          'default': False,
+          'exclusive': 'output',
+          'help': ('Write the output in-place, '
+                   'i.e. write to the same file as the input.')}),
         (('--main', '-m',),
          {'action': 'store_true',
           'default': False,
