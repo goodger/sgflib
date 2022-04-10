@@ -26,29 +26,27 @@ version 2.0a (2021-01-13~)
 
 Homepage: http://gotools.sourceforge.net
 
-Copyright © 2000-2021 David Goodger (goodger@python.org; "goodger" on KGS,
-"davidg" on IGS). sgflib.py comes with ABSOLUTELY NO WARRANTY. This is free
-software, and you are welcome to redistribute it and/or modify it under the
-terms of the GNU Lesser General Public License; see the source code for
-details.
+Copyright © 2000-2022 David Goodger (goodger@python.org). sgflib.py comes with
+ABSOLUTELY NO WARRANTY. This is free software, and you are welcome to
+redistribute it and/or modify it under the terms of the GNU General Public
+License; see the source code for details.
 
 
 Description
 ===========
 
-This library contains a parser and classes for SGF, the Smart Game Format, file
-format 4 (FF[4]). SGF is a text only, tree based file format designed to store
-game records of board games for two players, most commonly for the game of Go.
-(See `the official SGF specification <https://www.red-bean.com/sgf/>`_.)
+This library contains a parser and utility classes for SGF, the Smart Game
+Format, file format 4 (FF[4]). SGF is a text only, tree based file format
+designed to store game records of board games for two players, most commonly
+for the game of Go. (See `the official SGF specification
+<https://www.red-bean.com/sgf/>`_.)
 
 Given a bytestring containing a complete SGF data instance (the contents of a
 .sgf file), the `Parser` class will create a `Collection` object consisting of
 one or more `GameTree` instances (one per game in the SGF file), each
-containing a sequence of `Node` instances and (optionally) two or more branch
-`GameTree` objects (variations). Branches begin immediately following the last
-`Node` in the main `GameTree` sequence. Each `Node` contains a mapping of
-properties, ID-value pairs. All property values are lists, and can have
-multiple entries.
+containing `Node` instances and (optionally) branch `GameTree` objects
+(variations). Each `Node` contains a mapping of properties, ID-value pairs.
+All property values are lists, and can have multiple entries.
 
 Tree traversal methods are provided through the `Cursor` class.
 
@@ -60,7 +58,9 @@ supplied. The construction classes do not validate the resulting SGF.
 
 In addition, this library contains several utility classes:
 
-* SummaryCLI: Summarize one or more SGF files.
+* CLI: Base class for command-line interface utilities.
+
+* Summary, SummaryCLI: Summarize one or more SGF files.
 
 * NormalizerCLI: Put an SGF collection into a normalized form.
 
@@ -197,7 +197,7 @@ class Collection(list):
         """
         The canonical string representation of the `Collection`.
         """
-        return '{}({}, ...)'.format(self.__class__.__name__, repr(self[0]))
+        return f'{self.__class__.__name__}({repr(self[0])}, ...)'
 
     def cursor(self, gamenum=0):
         """Returns a `Cursor` object for navigation of the given `GameTree`."""
@@ -289,7 +289,8 @@ class GameTree(list):
 
     self.branches : list of `GameTree`
        Variations of a game. `self.branches[0]` is the main line of the game
-       (trunk of the tree).
+       (trunk of the tree). Branches begin immediately following the last
+       `Node` in the main `GameTree` sequence.
     """
 
     def __init__(self, nodelist=None, branches=None, comment=None):
@@ -353,10 +354,10 @@ class GameTree(list):
     def __repr__(self):
         nodelist = branches = ''
         if self:
-            nodelist = 'nodelist=[{}, ...], '.format(repr(self[0]))
+            nodelist = f'nodelist=[{repr(self[0])}, ...], '
         if self.branches:
-            branches = 'branches=[{}, ...]'.format(repr(self.branches[0]))
-        return '{}({}{})'.format(self.__class__.__name__, nodelist, branches)
+            branches = f'branches=[{repr(self.branches[0])}, ...]'
+        return f'{self.__class__.__name__}({nodelist}{branches})'
 
     def trunk(self):
         """
@@ -502,7 +503,7 @@ class Node(dict):
             return self.property_names[name]
         else:
             raise PropertyError(
-                "Unknown SGF property name or ID: '{}'".format(name))
+                f"Unknown SGF property name or ID: '{name}'")
 
     def __getattr__(self, name):
         key = self.resolve_property_id(name)
@@ -510,12 +511,10 @@ class Node(dict):
             return self[key]
         except KeyError as error:
             if name == key:
-                raise PropertyError(
-                    "No '{}' property ID in Node".format(name)) from None
+                raise PropertyError(f"No '{name}' property ID in Node") from None
             else:
-                raise (PropertyError(
-                    "No '{}' property (SGF ID '{}') in Node".format(name, key))
-                    ) from None
+                raise PropertyError(
+                    f"No '{name}' property (SGF ID '{key}') in Node") from None
 
     def __setattr__(self, name, value):
         key = self.resolve_property_id(name)
@@ -527,12 +526,10 @@ class Node(dict):
             del self[key]
         except KeyError as error:
             if name == key:
-                raise PropertyError(
-                    "No '{}' property ID in Node".format(name)) from None
+                raise PropertyError(f"No '{name}' property ID in Node") from None
             else:
-                raise (PropertyError(
-                    "No '{}' property (SGF ID '{}') in Node".format(name, key))
-                    ) from None
+                raise PropertyError(
+                    f"No '{name}' property (SGF ID '{key}') in Node") from None
 
     def __str__(self):
         """Return an SGF text representation of this `Node`."""
@@ -570,10 +567,8 @@ class Node(dict):
         return b''.join(parts)
 
     def __repr__(self):
-        return '{}({})'.format(
-            self.__class__.__name__,
-            ', '.join('{}={!r}'.format(name, value)
-                      for name, value in self.items()))
+        content = ', '.join(f'{name}={value!r}' for name, value in self.items())
+        return f'{self.__class__.__name__}({content})'
 
     def deepcopy(self):
         copy = self.__class__()
@@ -1196,8 +1191,8 @@ class Parser:
                 value = pvlist[0]
             else:
                 raise NodePropertyParseError(
-                    'Expected a scalar value, got a list: {}[{}]'
-                    .format(property_id, ']['.join(pvlist)))
+                    f'Expected a scalar value, got a list: {property_id}'
+                    f'[{"][".join(pvlist)}]')
             if property_id in node:
                 warnings.warn(
                     f'Duplicate property ID "{property_id}" in node '
@@ -1302,10 +1297,6 @@ class Summary:
     Command-line interface provided by `SummaryCLI` class.
     """
 
-    summary_format = (
-        '{DT}\t{RE}\t{PW}\t{WR}\t{PB}\t{BR}\t{KM}\t{HA}\t'
-        '{SZ}\t{TM}\t{OT}\t{GN}\t{PC}\t{EV}\t{filename}')
-
     summary_fields = {
         'DT' : 'Date',
         'RE' : 'Result',
@@ -1324,14 +1315,22 @@ class Summary:
         'filename' : 'Filename',
         }
 
-    summary_header = summary_format.format(**summary_fields)
+    summary_table_format = '\t'.join(f"{{{ID}}}" for ID in summary_fields)
+
+    summary_header = summary_table_format.format(**summary_fields)
+
+    summary_list_format = (
+        '* '
+        + '\n  '.join(f"{':'+fullname+':':12} {{{ID}}}"
+                      for ID, fullname in summary_fields.items())
+        + '\n')
 
     #ctrltrans = string.maketrans(
     #    ("\000\001\002\003\004\005\006\007\010\011\012\013"
     #     "\014\015\016\017\020\021\022\023\024\025\026\027"
     #     "\030\031\032\033\034\035\036\037"), " "*32)
 
-    def __init__(self, path, game_collections=True):
+    def __init__(self, path, game_collections=True, format='table'):
         """
         Read and store (in `self.data`) one SGF file's contents, and
         initialize an SGF parser (as `self.parser`).
@@ -1342,7 +1341,10 @@ class Summary:
         - game_collections : boolean -- Flags whether to consider SGF
           collections. ``False`` (no) is faster, but only the first game of an
           SGF file will be processed.
+        - format : string -- 'list' or 'table' (default)
         """
+
+        self.format = format
 
         self.filename = os.path.basename(path)
         """Name of file being summarized."""
@@ -1375,7 +1377,10 @@ class Summary:
         SGF.
         """
         if self.is_sgf:
-            return self.summary_format.format(**self.properties)
+            if self.format == 'list':
+                return self.summary_list_format.format(**self.properties)
+            else:
+                return self.summary_table_format.format(**self.properties)
         else:
             return ''
 
@@ -1459,9 +1464,8 @@ class CLI:
             self.execute()
         except:
             print(
-                '\n{}'.format(
-                    datetime.datetime.now().isoformat(
-                        sep=' ', timespec='seconds')),
+                '\n' + datetime.datetime.now().isoformat(
+                    sep=' ', timespec='seconds'),
                 file=sys.stderr)
             raise
 
@@ -1527,7 +1531,9 @@ class SummaryCLI(CLI):
         """
         Iterate through SGF files, outputting summaries.
         """
-        print(Summary.summary_header)
+        format = 'list' if self.settings.list_format else 'table'
+        if format == 'table':
+            print(Summary.summary_header)
         for path in self.settings.source_file_or_dir_paths:
             if os.path.isdir(path):
                 srcpath = path
@@ -1540,7 +1546,7 @@ class SummaryCLI(CLI):
                 if os.path.isdir(file_path):
                     # ignore subdirectories
                     continue
-                sgfsum = Summary(file_path, self.settings.collections)
+                sgfsum = Summary(file_path, self.settings.collections, format)
                 # Summarize one game at a time from SGF file:
                 while sgfsum.summarize():
                     summary = str(sgfsum)
@@ -1561,6 +1567,9 @@ class SummaryCLI(CLI):
           'help': ('Enable SGF collections (multiple games within each .sgf '
                    'file). The default is to analyze only the first game in '
                    'a collection.')}),
+        (('--list-format', '-l',),
+         {'action': 'store_true',
+          'help': 'Format the output as a list. The default is table format.'}),
         )
 
 
