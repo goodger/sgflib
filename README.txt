@@ -1,55 +1,91 @@
-==========================================
-Go Tools: Smart Game Format Parser Library
-==========================================
+======================================================
+ sgflib: Smart Game Format Parser Library & Utilities
+======================================================
 
 Description
 ===========
 
 For Python programmers, sgflib.py is a module containing a parser and classes
-for SGF, the Smart Game Format. Also included is the module typelib.py, which
-emulates Python built-in data types as classes.
+for SGF, the Smart Game Format, specifically for the game of Go.
+
+For Go players, several utilities are included:
+
+* sgfmerge: Merge two or more game record files into one. Works best
+  when the game record files are for the same game, and contain
+  variations.
+
+* sgfnorm: Normalize an SGF file. Usful for comparing two files
+  representing the same game.
+
+* sgfsummary: Read, analyze, and summarize one or more SGF files.
+
 
 Installation
 ============
 
-Please note that sgflib.py and typelib.py are included as part of the
-sgfsummary.py download, so you need not download them separately. Although these
-modules are only useful to Python programmers, if you're not one, I encourage
-you to take a look. Python is a cool programming language.
+You'll need the Python language itself, version 3.8 or higher, freely
+available from http://www.python.org.
 
-You'll need the Python language itself, freely available from
-[[http://www.python.org]].
-
-The sgflib.tgz (tarred, gzipped) archive contains the following:
+The sgflib.tgz archive contains the following:
 
 - sgflib.py -- SGF Parser Library. Put this in a folder on Python's path.
 
-- typelib.py -- Type Class Library. Put this in a folder on Python's path.
+- sgfsummary, sgfnorm, sgfmerge -- Utility tools. Put these on your PATH.
 
 - README.txt -- Installation instructions (the file you're reading now).
 
-- lgpl.txt -- The GNU Lesser General Public License; applies to sgflib.py.
+- test_sgflib.py & test_data/ -- Test suite. Requires pytest to run.
 
-I have only tested this code on my system, MacOS 8.6, running Python 1.5.2. I
-did try to write it to be platform-independent. If you have any trouble running
-it, find (fix?) any bugs, or add any features, please contact me.
 
-MacOS users: please see the Macintosh Python Notes and the Macintosh SGF Notes
-at [[http://gotools.sourceforge.net]].
+Bugs & Other Issues
+===================
+
+If you have any trouble running this code, if you find (maybe fix?)
+any bugs, or add any features, please contact_ the author.
+
 
 To Do
 =====
 
-There's nothing on my list for sgflib.py right now.
+* Reimplement the GameTree as a data structure that's convenient for
+  the user of sgflib, rather than following the file format.
 
-typelib.py:
+* Reimplement the Cursor class? Or remove it altogether if unnecessary.
 
-- Implement 'Function'? 'File'? (Have to come up with a good reason first ;-)
+* Reimplement the parser?
 
-Have any suggestions? Want to help? Let me know!
+  * Simplify. It works, but it seems clunky. Written early in my
+    Python career.
+
+  * Reimplement as a generator?
+
+  * Support earlier versions of SGF?
+
+* Titler: Populate the title (GN/game_name property) inside the SGF
+  file itself, e.g.:
+
+      player1 (2 dan, white) vs player2 (4 kyu, black +h5); W+18½; KGS; 2020-12-04
+
+* Renamer: Rename SGF files, e.g.:
+
+      2020-12-04 player1 · player2 +h5 W+18.sgf
+
+* Query SGF data: Extract game & node properties & comments from .sgf
+  files. Queries could be Python expressions for maximum flexibility.
+
+* Handicap convertor? Lizzie (Leela Zero?) can't handle handicap
+  stones, so this program would convert the HA[n] & AB[xx] tags to
+  B[xx] moves & W[] passes. Katago via KaTrain doesn't have this
+  problem though.
+
+* Auto-label variations.
+
+Have any suggestions? Want to help? Please contact_ the author.
+
 
 Contact
 =======
 
-Project administrator: David Goodger [[mailto:dgoodger@bigfoot.com]]
-Go Tools Project website: [[http://gotools.sourceforge.net]]
+Project author: `David Goodger <mailto:goodger@python.org>`_.
+
+Go Tools Project website: http://gotools.sourceforge.net.
