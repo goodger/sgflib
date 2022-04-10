@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import sys
 import io
 
 import pytest
@@ -410,3 +411,7 @@ HA[3]AB[pd][dp][dd];W[pp];B[nq];W[oq]C[ x started observation.
     print(collection[0].property_search("B", 1))
     print("\nSearch for property 'C':")
     print(collection[0].property_search("C", 1))
+
+
+if __name__ == '__main__':
+    sys.exit(pytest.main())
